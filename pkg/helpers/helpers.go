@@ -1,12 +1,20 @@
 package helpers
 
 import (
+	"crypto/sha1"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
+	"path/filepath"
 
 	"github.com/joho/godotenv"
+)
+
+var (
+	ErrCantReadFile = errors.New("cannot read file with thod path")
 )
 
 func ToJson(item interface{}) ([]byte, error) {
@@ -37,4 +45,21 @@ func FilePath() string {
 	var path string
 	fmt.Scanln(&path)
 	return path
+}
+
+func HashData(data []byte) []byte {
+	hash := sha1.Sum(data)
+	return hash[:]
+}
+
+func MatchHash(h1, h2 []byte) bool {
+	return string(h1) == string(h2)
+}
+
+func CreateFileAndWrite(destination, filename string, data []byte) error {
+	_ = os.Mkdir(destination, os.ModePerm)
+	fPath := filepath.Join(destination, filename)
+	os.Create(fPath)
+	ioutil.WriteFile(fPath, data, os.ModePerm)
+	return nil
 }

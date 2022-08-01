@@ -1,6 +1,7 @@
 package data
 
 import (
+	"encoding/json"
 	"log"
 	"os"
 	"strings"
@@ -17,7 +18,7 @@ type Metadata struct {
 	Duration  time.Duration `json:"duration"`
 }
 
-func GetMetadata(file string) Metadata {
+func GetMetadataOfFile(file string) Metadata {
 	meta, err := os.Stat(file)
 	if err != nil {
 		log.Fatal("could not read meta data of file:", file, err)
@@ -30,4 +31,13 @@ func GetMetadata(file string) Metadata {
 		Extension: extension,
 		Size:      meta.Size(),
 	}
+}
+
+func GetMetadataFromJson(metadata []byte) (Metadata, error) {
+	var s Metadata
+	err := json.Unmarshal(metadata, &s)
+	if err != nil {
+		return Metadata{}, err
+	}
+	return s, nil
 }
