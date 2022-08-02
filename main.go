@@ -14,9 +14,10 @@ import (
 )
 
 const (
-	helpCmd    = "h"
-	encryptCmd = "e"
-	decryptCmd = "d"
+	helpCmd     = "h"
+	encryptCmd  = "e"
+	decryptCmd  = "d"
+	sendDataCmd = "s"
 )
 
 const (
@@ -47,7 +48,6 @@ func main() {
 			if err != nil {
 				log.Fatal(err)
 			}
-			// log.Prisntln(data)
 		case cmd == decryptCmd:
 			fmt.Println(decryptMsg)
 			filePath := helpers.FilePath()
@@ -56,19 +56,16 @@ func main() {
 			if err != nil {
 				log.Fatal(err)
 			}
-			data, err := encrypt.DecryptAndSave(decm1, "./l")
+			_, err = encrypt.DecryptAndSave(decm1, "./l")
 			if err != nil {
 				log.Fatal(err)
 
 			}
-			log.Println(string(data))
 
 		default:
 			continue
 		}
 	}
-
-	// log.Println(file)
 }
 
 func Duration(mp3File string) {

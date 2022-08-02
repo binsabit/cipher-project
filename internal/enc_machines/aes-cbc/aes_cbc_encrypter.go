@@ -4,6 +4,7 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"encoding/binary"
+	"fmt"
 	"log"
 	"strings"
 
@@ -47,7 +48,7 @@ func (a AES_CBC_Encryption) Encrypt() (encryptedContent []byte, err error) {
 	binary.LittleEndian.PutUint32(metaSize, uint32(len(metadataJson)))
 	log.Println(metaSize)
 	IV := encryption.GenerateIV(aes.BlockSize)
-	fullcontent := addAll(IV, metaSize, metadataJson, hash, a.content)
+	fullcontent := addAll(metaSize, metadataJson, hash, a.content)
 	log.Println(IV)
 	log.Println(hash)
 
@@ -87,28 +88,28 @@ func (a AES_CBC_Encryption) Decrypt() (decryptedContent []byte, err error) {
 	dec := make([]byte, len(a.content))
 
 	mode.CryptBlocks(dec, a.content)
-	cutTrailingSpaces := []byte(strings.TrimSpace(string(dec)))
+	// cutTrailingSpaces := []byte(strings.TrimSpace(string(dec)))
 
-	jsonSizeByte := cutTrailingSpaces[aes.BlockSize*2 : aes.BlockSize*2+jsonMemBytes]
+	jsonSizeByte := dec[aes.BlockSize : aes.BlockSize+jsonMemBytes]
 	log.Println(jsonSizeByte)
 	jsonSizeInt := int(binary.LittleEndian.Uint32(jsonSizeByte))
 
-	metadata := cutTrailingSpaces[aes.BlockSize*2+jsonMemBytes : aes.BlockSize*2+jsonMemBytes+jsonSizeInt]
+	metadata := dec[aes.BlockSize+jsonMemBytes : aes.BlockSize+jsonMemBytes+jsonSizeInt]
 
-	g, err := data.GetMetadataFromJson(metadata)
+	data, err := data.GetMetadataFromJson(metadata)
 	if err != nil {
 		return nil, err
 	}
-	log.Println(g)
-	hashPrev := cutTrailingSpaces[aes.BlockSize*2+jsonMemBytes+jsonSizeInt : aes.BlockSize*2+jsonMemBytes+jsonSizeInt+hashMemBytes]
+	log.Println(data)
+	hashPrev := dec[aes.BlockSize+jsonMemBytes+jsonSizeInt : aes.BlockSize+jsonMemBytes+jsonSizeInt+hashMemBytes]
 	log.Println(hashPrev)
 
-	content := cutTrailingSpaces[aes.BlockSize*2+jsonSizeInt+jsonMemBytes+hashMemBytes:]
+	content := []byte(strings.TrimSpace(string(dec[aes.BlockSize+jsonSizeInt+jsonMemBytes+hashMemBytes : aes.BlockSize+jsonSizeInt+jsonMemBytes+hashMemBytes+int(data.Size)])))
 
 	hashCur := helpers.HashData(content)
 
 	if !helpers.MatchHash(hashPrev, hashCur) {
-		// return nil, fmt.Errorf("file damaged hashes does not match")
+		return nil, fmt.Errorf("file damaged hashes does not match")
 	}
 
 	return content, err
@@ -123,9 +124,8 @@ func (a AES_CBC_Encryption) DecryptAndSave(destination string) ([]byte, error) {
 	return data, nil
 }
 
-func addAll(IV, metasize, metadata, hash, data []byte) []byte {
+func addAll(metasize, metadata, hash, data []byte) []byte {
 	var res []byte
-	res = append(res, IV...)
 	res = append(res, metasize...)
 	res = append(res, metadata...)
 	res = append(res, hash...)

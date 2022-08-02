@@ -34,7 +34,7 @@ func EnvVars() map[string]string {
 }
 
 func ReadFile(path string) ([]byte, error) {
-	file, err := os.ReadFile(path)
+	file, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("could not read file:", err)
 	}
@@ -60,6 +60,6 @@ func CreateFileAndWrite(destination, filename string, data []byte) error {
 	_ = os.Mkdir(destination, os.ModePerm)
 	fPath := filepath.Join(destination, filename)
 	os.Create(fPath)
-	ioutil.WriteFile(fPath, data, os.ModePerm)
+	ioutil.WriteFile(fPath, data, 0644)
 	return nil
 }
